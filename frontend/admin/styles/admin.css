@@ -1,0 +1,303 @@
+/* ESTILOS ADMIN DASHBOARD */
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* SIDEBAR (igual que superadmin) */
+.sidebar {
+  width: 250px;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-header h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.sidebar-header p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-item {
+  padding: 12px 15px;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 30px;
+  background: #f9fafb;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.content-header h1 {
+  color: #1f2937;
+  font-size: 28px;
+}
+
+/* GRID DE CANCHAS */
+.canchas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.cancha-card {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.cancha-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.cancha-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.cancha-content {
+  padding: 15px;
+}
+
+.cancha-content h3 {
+  margin-bottom: 10px;
+  color: #1f2937;
+}
+
+.cancha-content p {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.precio {
+  font-size: 20px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 15px !important;
+}
+
+.cancha-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 10px;
+}
+
+.empty-state p {
+  color: #6b7280;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 3% auto;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #000;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+/* HORARIOS */
+.horario-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.dia-select {
+  flex: 1;
+}
+
+.hora-inicio, .hora-fin {
+  flex: 1;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
+/* TABLA */
+.table {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table thead {
+  background: #f3f4f6;
+}
+
+.table th, .table td {
+  padding: 15px;
+  text-align: left;
+}
+
+.table th {
+  font-weight: 600;
+  color: #374151;
+}
+
+.table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .canchas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .horario-item {
+    flex-wrap: wrap;
+  }
+}

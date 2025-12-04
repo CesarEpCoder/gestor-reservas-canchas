@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservar Cancha - ReservaCancha</title>
+  <link rel="stylesheet" href="../styles/global.css">
+  <link rel="stylesheet" href="styles/user.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>⚽ ReservaCancha</h2>
+        <p id="userNameDisplay"></p>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="reservas.html" class="nav-item active">🏟️ Reservar Cancha</a>
+        <a href="mis-reservas.html" class="nav-item">📋 Mis Reservas</a>
+        <a href="#" onclick="logout()" class="nav-item">🚪 Cerrar Sesión</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="content-header">
+        <h1>Canchas Disponibles</h1>
+      </header>
+
+      <!-- Grid de Canchas -->
+      <div id="canchasGrid" class="canchas-grid"></div>
+    </main>
+  </div>
+
+  <!-- Modal para seleccionar fecha y hora -->
+  <div id="reservaModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="canchaName"></h2>
+      <p id="canchaPrice"></p>
+      
+      <form id="reservaForm">
+        <input type="hidden" id="canchaId">
+        
+        <div class="form-group">
+          <label for="fecha">Selecciona una Fecha</label>
+          <input type="date" id="fecha" required>
+        </div>
+
+        <div class="form-group">
+          <label>Horarios Disponibles</label>
+          <div id="horariosDisponibles"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" id="btnReservar" disabled>
+            Proceder al Pago
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    // Verificar que sea usuario
+    if (!requireRole(['user'])) {
+      throw new Error('Acceso denegado');
+    }
+
+    const user = getUser();
+    document.getElementById('userNameDisplay').textContent = `Usuario: ${user.nombre}`;
+
+    let horaSeleccionada = null;
+
+    // Cargar canchas al iniciar
+    loadCanchas();
+
+    // Establecer fecha mínima (hoy)
+    document.getElementById('fecha').min = getTodayDate();
+
+    /**
+     * Cargar todas las canchas
+     */
+    async function loadCanchas() {
+      try {
+        showLoader('canchasGrid');
+        const data = await fetchGET('/canchas/todas');
+
+        if (data.total === 0) {
+          document.getElementById('canchasGrid').innerHTML = '<p>No hay canchas disponibles.</p>';
+          return;
+        }
+
+        let html = '';
+        data.canchas.forEach(cancha => {
+          html += `
+            <div class="cancha-card">
+              <img src="${cancha.imagenUrl}" alt="${cancha.nombre}">
+              <div class="cancha-content">
+                <h3>${cancha.nombre}</h3>
+                <p>${cancha.descripcion}</p>
+                <p class="admin-info">📍 ${cancha.adminId.nombre}</p>
+                <p class="precio">${formatPrice(cancha.precio)}/hora</p>
+                <button class="btn btn-primary" onclick="selectCancha('${cancha._id}', '${cancha.nombre}', ${cancha.precio})">
+                  Reservar
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        document.getElementById('canchasGrid').innerHTML = html;
+        } catch (error) {
+        showError('Error al cargar canchas: ' + error.message);
+      }
+    }
+
+    /**
+     * Seleccionar cancha para reservar
+     */
+    function selectCancha(id, nombre, precio) {
+      document.getElementById('canchaId').value = id;
+      document.getElementById('canchaName').textContent = nombre;
+      document.getElementById('canchaPrice').textContent = formatPrice(precio) + ' / hora';
+      document.getElementById('fecha').value = '';
+      document.getElementById('horariosDisponibles').innerHTML = '<p>Selecciona una fecha para ver horarios disponibles.</p>';
+      document.getElementById('btnReservar').disabled = true;
+      horaSeleccionada = null;
+      document.getElementById('reservaModal').style.display = 'block';
+    }
+
+    /**
+     * Cargar horarios cuando se selecciona una fecha
+     */
+    document.getElementById('fecha').addEventListener('change', async (e) => {
+      const fecha = e.target.value;
+      const canchaId = document.getElementById('canchaId').value;
+
+      if (!isValidFutureDate(fecha)) {
+        alert('No puedes seleccionar fechas pasadas');
+        e.target.value = '';
+        return;
+      }
+
+      try {
+        document.getElementById('horariosDisponibles').innerHTML = '<p>Cargando horarios...</p>';
+        
+        const data = await fetchGET(`/canchas/${canchaId}/disponibilidad?fecha=${fecha}`);
+
+        if (data.horariosDisponibles.length === 0) {
+          document.getElementById('horariosDisponibles').innerHTML = '<p>No hay horarios disponibles para esta fecha.</p>';
+          return;
+        }
+
+        let html = '<div class="horarios-grid">';
+        data.horariosDisponibles.forEach(hora => {
+          html += `
+            <button type="button" class="horario-btn" onclick="selectHorario('${hora}', this)">
+              ${hora}
+            </button>
+          `;
+        });
+        html += '</div>';
+
+        document.getElementById('horariosDisponibles').innerHTML = html;
+
+      } catch (error) {
+        showError('Error al cargar horarios: ' + error.message);
+      }
+    });
+
+    /**
+     * Seleccionar horario
+     */
+    function selectHorario(hora, btn) {
+      // Remover selección anterior
+      document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
+      
+      // Marcar selección actual
+      btn.classList.add('selected');
+      horaSeleccionada = hora;
+      
+      // Habilitar botón de reservar
+      document.getElementById('btnReservar').disabled = false;
+    }
+
+    /**
+     * Manejar formulario de reserva
+     */
+    document.getElementById('reservaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!horaSeleccionada) {
+        alert('Por favor selecciona un horario');
+        return;
+      }
+
+      const canchaId = document.getElementById('canchaId').value;
+      const fecha = document.getElementById('fecha').value;
+
+      try {
+        const submitBtn = document.getElementById('btnReservar');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Procesando...';
+
+        // Crear reserva
+        const data = await fetchPOST('/reservas/crear', {
+          canchaId,
+          fecha,
+          hora: horaSeleccionada
+        });
+
+        // Redirigir a Webpay
+        window.location.href = data.pago.url;
+
+      } catch (error) {
+        showError('Error al crear reserva: ' + error.message);
+        
+        const submitBtn = document.getElementById('btnReservar');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Proceder al Pago';
+      }
+    });
+
+    /**
+     * Cerrar modal
+     */
+    function closeModal() {
+      document.getElementById('reservaModal').style.display = 'none';
+    }
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+      const modal = document.getElementById('reservaModal');
+      if (event.target == modal) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>

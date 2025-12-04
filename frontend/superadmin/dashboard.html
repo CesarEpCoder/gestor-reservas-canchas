@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard SuperAdmin - ReservaCancha</title>
+  <link rel="stylesheet" href="../styles/global.css">
+  <link rel="stylesheet" href="styles/superadmin.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>⚽ ReservaCancha</h2>
+        <p id="userNameDisplay"></p>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active">👥 Gestionar Admins</a>
+        <a href="#" onclick="logout()" class="nav-item">🚪 Cerrar Sesión</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="content-header">
+        <h1>Gestión de Administradores</h1>
+        <button class="btn btn-primary" onclick="showCreateModal()">
+          ➕ Crear Administrador
+        </button>
+      </header>
+
+      <!-- Lista de Admins -->
+      <div class="admins-container">
+        <div id="adminsTable"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal para Crear/Editar Admin -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Crear Administrador</h2>
+      
+      <form id="adminForm">
+        <input type="hidden" id="adminId">
+        
+        <div class="form-group">
+          <label for="nombre">Nombre Completo</label>
+          <input type="text" id="nombre" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" minlength="6">
+          <small id="passwordHelp">Deja en blanco para no cambiar (solo al editar)</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    // Verificar que sea superadmin
+    if (!requireRole(['superadmin'])) {
+      throw new Error('Acceso denegado');
+    }
+
+    // Mostrar nombre del usuario
+    const user = getUser();
+    document.getElementById('userNameDisplay').textContent = `SuperAdmin: ${user.nombre}`;
+
+    // Cargar admins al iniciar
+    loadAdmins();
+
+    /**
+     * Cargar lista de administradores
+     */
+    async function loadAdmins() {
+      try {
+        showLoader('adminsTable');
+        const data = await fetchGET('/admin/list');
+
+        if (data.total === 0) {
+          document.getElementById('adminsTable').innerHTML = '<p>No hay administradores registrados.</p>';
+          return;
+        }
+
+        // Crear tabla
+        let html = `
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Fecha Registro</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.admins.forEach(admin => {
+          html += `
+            <tr>
+              <td>${admin.nombre}</td>
+              <td>${admin.email}</td>
+              <td>${formatDate(admin.createdAt)}</td>
+              <td>
+                <button class="btn btn-small btn-primary" onclick="editAdmin('${admin._id}')">Editar</button>
+                <button class="btn btn-small btn-danger" onclick="deleteAdmin('${admin._id}', '${admin.nombre}')">Eliminar</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('adminsTable').innerHTML = html;
+
+      } catch (error) {
+        showError('Error al cargar administradores: ' + error.message);
+      }
+    }
+
+    /**
+     * Mostrar modal para crear admin
+     */
+    function showCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Crear Administrador';
+      document.getElementById('adminForm').reset();
+      document.getElementById('adminId').value = '';
+      document.getElementById('password').required = true;
+      document.getElementById('passwordHelp').style.display = 'none';
+      document.getElementById('adminModal').style.display = 'block';
+    }
+
+    /**
+     * Editar admin
+     */
+    async function editAdmin(id) {
+      try {
+        const data = await fetchGET('/admin/list');
+        const admin = data.admins.find(a => a._id === id);
+
+        if (!admin) {
+          showError('Administrador no encontrado');
+          return;
+        }
+
+        document.getElementById('modalTitle').textContent = 'Editar Administrador';
+        document.getElementById('adminId').value = admin._id;
+        document.getElementById('nombre').value = admin.nombre;
+        document.getElementById('email').value = admin.email;
+        document.getElementById('password').value = '';
+        document.getElementById('password').required = false;
+        document.getElementById('passwordHelp').style.display = 'block';
+        document.getElementById('adminModal').style.display = 'block';
+
+      } catch (error) {
+        showError('Error al cargar datos del admin: ' + error.message);
+      }
+    }
+
+    /**
+     * Eliminar admin
+     */
+    async function deleteAdmin(id, nombre) {
+      if (!confirm(`¿Estás seguro de eliminar al administrador "${nombre}"?`)) {
+        return;
+      }
+
+      try {
+        await fetchDELETE(`/admin/delete/${id}`);
+        showSuccess('Administrador eliminado exitosamente');
+        loadAdmins();
+      } catch (error) {
+        showError('Error al eliminar: ' + error.message);
+      }
+    }
+
+    /**
+     * Cerrar modal
+     */
+    function closeModal() {
+      document.getElementById('adminModal').style.display = 'none';
+    }
+
+    /**
+     * Manejar envío del formulario
+     */
+    document.getElementById('adminForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const adminId = document.getElementById('adminId').value;
+      const nombre = document.getElementById('nombre').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      const body = { nombre, email };
+      if (password) {
+        body.password = password;
+      }
+
+      try {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        if (adminId) {
+          // Editar
+          await fetchPUT(`/admin/edit/${adminId}`, body);
+          showSuccess('Administrador actualizado exitosamente');
+        } else {
+          // Crear
+          await fetchPOST('/admin/create', body);
+          showSuccess('Administrador creado exitosamente');
+        }
+
+        closeModal();
+        loadAdmins();
+
+      } catch (error) {
+        showError('Error: ' + error.message);
+      } finally {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+      const modal = document.getElementById('adminModal');
+      if (event.target == modal) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>

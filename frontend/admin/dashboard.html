@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - ReservaCancha</title>
+  <link rel="stylesheet" href="../styles/global.css">
+  <link rel="stylesheet" href="styles/admin.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>⚽ ReservaCancha</h2>
+        <p id="userNameDisplay"></p>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item active">🏟️ Mis Canchas</a>
+        <a href="mis-reservas.html" class="nav-item">📋 Reservas</a>
+        <a href="#" onclick="logout()" class="nav-item">🚪 Cerrar Sesión</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="content-header">
+        <h1>Mis Canchas</h1>
+        <button class="btn btn-primary" onclick="showCreateModal()">
+          ➕ Agregar Cancha
+        </button>
+      </header>
+
+      <!-- Grid de Canchas -->
+      <div id="canchasGrid" class="canchas-grid"></div>
+    </main>
+  </div>
+
+  <!-- Modal para Crear/Editar Cancha -->
+  <div id="canchaModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Agregar Cancha</h2>
+      
+      <form id="canchaForm">
+        <input type="hidden" id="canchaId">
+        
+        <div class="form-group">
+          <label for="nombre">Nombre de la Cancha</label>
+          <input type="text" id="nombre" required>
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" rows="3" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="precio">Precio por Hora ($)</label>
+          <input type="number" id="precio" min="0" required>
+        </div>
+
+        <div class="form-group">
+          <label for="imagen">Imagen de la Cancha</label>
+          <input type="file" id="imagen" accept="image/*">
+          <small id="imagenHelp">Deja en blanco para no cambiar (solo al editar)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Horarios Disponibles</label>
+          <div id="horariosContainer">
+            <div class="horario-item">
+              <select class="dia-select">
+                <option value="Lunes">Lunes</option>
+                <option value="Martes">Martes</option>
+                <option value="Miércoles">Miércoles</option>
+                <option value="Jueves">Jueves</option>
+                <option value="Viernes">Viernes</option>
+                <option value="Sábado">Sábado</option>
+                <option value="Domingo">Domingo</option>
+              </select>
+              <input type="time" class="hora-inicio" value="09:00">
+              <input type="time" class="hora-fin" value="18:00">
+              <button type="button" class="btn-remove" onclick="removeHorario(this)">❌</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-small" onclick="addHorario()">
+            ➕ Agregar Día
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    // Verificar que sea admin
+    if (!requireRole(['admin'])) {
+      throw new Error('Acceso denegado');
+    }
+
+    // Mostrar nombre del usuario
+    const user = getUser();
+    document.getElementById('userNameDisplay').textContent = `Admin: ${user.nombre}`;
+
+    // Cargar canchas al iniciar
+    loadCanchas();
+
+    /**
+     * Cargar mis canchas
+     */
+    async function loadCanchas() {
+      try {
+        showLoader('canchasGrid');
+        const data = await fetchGET('/canchas/mis-canchas');
+
+        if (data.total === 0) {
+          document.getElementById('canchasGrid').innerHTML = `
+            <div class="empty-state">
+              <p>No tienes canchas registradas.</p>
+              <button class="btn btn-primary" onclick="showCreateModal()">Agregar Primera Cancha</button>
+            </div>
+          `;
+          return;
+        }
+
+        // Crear grid de canchas
+        let html = '';
+        data.canchas.forEach(cancha => {
+          html += `
+            <div class="cancha-card">
+              <img src="${cancha.imagenUrl}" alt="${cancha.nombre}">
+              <div class="cancha-content">
+                <h3>${cancha.nombre}</h3>
+                <p>${cancha.descripcion}</p>
+                <p class="precio">${formatPrice(cancha.precio)}/hora</p>
+                <div class="cancha-actions">
+                  <button class="btn btn-primary btn-small" onclick="editCancha('${cancha._id}')">Editar</button>
+                  <button class="btn btn-danger btn-small" onclick="deleteCancha('${cancha._id}', '${cancha.nombre}')">Eliminar</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        document.getElementById('canchasGrid').innerHTML = html;
+
+      } catch (error) {
+        showError('Error al cargar canchas: ' + error.message);
+      }
+    }
+
+    /**
+     * Mostrar modal para crear cancha
+     */
+    function showCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Agregar Cancha';
+      document.getElementById('canchaForm').reset();
+      document.getElementById('canchaId').value = '';
+      document.getElementById('imagen').required = true;
+      document.getElementById('imagenHelp').style.display = 'none';
+      
+      // Reset horarios container
+      document.getElementById('horariosContainer').innerHTML = `
+        <div class="horario-item">
+          <select class="dia-select">
+            <option value="Lunes">Lunes</option>
+            <option value="Martes">Martes</option>
+            <option value="Miércoles">Miércoles</option>
+            <option value="Jueves">Jueves</option>
+            <option value="Viernes">Viernes</option>
+            <option value="Sábado">Sábado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+          <input type="time" class="hora-inicio" value="09:00">
+          <input type="time" class="hora-fin" value="18:00">
+          <button type="button" class="btn-remove" onclick="removeHorario(this)">❌</button>
+        </div>
+      `;
+      
+      document.getElementById('canchaModal').style.display = 'block';
+    }
+
+    /**
+     * Agregar nuevo horario
+     */
+    function addHorario() {
+      const container = document.getElementById('horariosContainer');
+      const newHorario = document.createElement('div');
+      newHorario.className = 'horario-item';
+      newHorario.innerHTML = `
+        <select class="dia-select">
+          <option value="Lunes">Lunes</option>
+          <option value="Martes">Martes</option>
+          <option value="Miércoles">Miércoles</option>
+          <option value="Jueves">Jueves</option>
+          <option value="Viernes">Viernes</option>
+          <option value="Sábado">Sábado</option>
+          <option value="Domingo">Domingo</option>
+        </select>
+        <input type="time" class="hora-inicio" value="09:00">
+        <input type="time" class="hora-fin" value="18:00">
+        <button type="button" class="btn-remove" onclick="removeHorario(this)">❌</button>
+      `;
+      container.appendChild(newHorario);
+    }
+
+    /**
+     * Remover horario
+     */
+    function removeHorario(btn) {
+      const container = document.getElementById('horariosContainer');
+      if (container.children.length > 1) {
+        btn.parentElement.remove();
+      } else {
+        alert('Debe haber al menos un horario');
+      }
+    }
+
+    /**
+     * Editar cancha
+     */
+    async function editCancha(id) {
+      try {
+        const data = await fetchGET('/canchas/mis-canchas');
+        const cancha = data.canchas.find(c => c._id === id);
+
+        if (!cancha) {
+          showError('Cancha no encontrada');
+          return;
+        }
+
+        document.getElementById('modalTitle').textContent = 'Editar Cancha';
+        document.getElementById('canchaId').value = cancha._id;
+        document.getElementById('nombre').value = cancha.nombre;
+        document.getElementById('descripcion').value = cancha.descripcion;
+        document.getElementById('precio').value = cancha.precio;
+        document.getElementById('imagen').required = false;
+        document.getElementById('imagenHelp').style.display = 'block';
+
+        // Cargar horarios
+        const horariosContainer = document.getElementById('horariosContainer');
+        horariosContainer.innerHTML = '';
+        
+        if (cancha.horarios && cancha.horarios.length > 0) {
+          cancha.horarios.forEach(horario => {
+            const horarioItem = document.createElement('div');
+            horarioItem.className = 'horario-item';
+            horarioItem.innerHTML = `
+              <select class="dia-select">
+                <option value="Lunes" ${horario.dia === 'Lunes' ? 'selected' : ''}>Lunes</option>
+                <option value="Martes" ${horario.dia === 'Martes' ? 'selected' : ''}>Martes</option>
+                <option value="Miércoles" ${horario.dia === 'Miércoles' ? 'selected' : ''}>Miércoles</option>
+                <option value="Jueves" ${horario.dia === 'Jueves' ? 'selected' : ''}>Jueves</option>
+                <option value="Viernes" ${horario.dia === 'Viernes' ? 'selected' : ''}>Viernes</option>
+                <option value="Sábado" ${horario.dia === 'Sábado' ? 'selected' : ''}>Sábado</option>
+                <option value="Domingo" ${horario.dia === 'Domingo' ? 'selected' : ''}>Domingo</option>
+              </select>
+              <input type="time" class="hora-inicio" value="${horario.horaInicio}">
+              <input type="time" class="hora-fin" value="${horario.horaFin}">
+              <button type="button" class="btn-remove" onclick="removeHorario(this)">❌</button>
+            `;
+            horariosContainer.appendChild(horarioItem);
+          });
+        } else {
+          addHorario();
+        }
+
+        document.getElementById('canchaModal').style.display = 'block';
+
+      } catch (error) {
+        showError('Error al cargar datos de la cancha: ' + error.message);
+      }
+    }
+
+    /**
+     * Eliminar cancha
+     */
+    async function deleteCancha(id, nombre) {
+      if (!confirm(`¿Estás seguro de eliminar la cancha "${nombre}"?`)) {
+        return;
+      }
+
+      try {
+        await fetchDELETE(`/canchas/delete/${id}`);
+        showSuccess('Cancha eliminada exitosamente');
+        loadCanchas();
+      } catch (error) {
+        showError('Error al eliminar: ' + error.message);
+      }
+    }
+
+    /**
+     * Cerrar modal
+     */
+    function closeModal() {
+      document.getElementById('canchaModal').style.display = 'none';
+    }
+
+    /**
+     * Manejar envío del formulario
+     */
+    document.getElementById('canchaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const canchaId = document.getElementById('canchaId').value;
+      const nombre = document.getElementById('nombre').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const precio = document.getElementById('precio').value;
+      const imagenFile = document.getElementById('imagen').files[0];
+
+      // Recopilar horarios
+      const horarios = [];
+      const horarioItems = document.querySelectorAll('.horario-item');
+      horarioItems.forEach(item => {
+        const dia = item.querySelector('.dia-select').value;
+        const horaInicio = item.querySelector('.hora-inicio').value;
+        const horaFin = item.querySelector('.hora-fin').value;
+        horarios.push({ dia, horaInicio, horaFin });
+      });
+
+      // Crear FormData
+      const formData = new FormData();
+      formData.append('nombre', nombre);
+      formData.append('descripcion', descripcion);
+      formData.append('precio', precio);
+      formData.append('horarios', JSON.stringify(horarios));
+      
+      if (imagenFile) {
+        formData.append('imagen', imagenFile);
+      }
+
+      try {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+
+        if (canchaId) {
+          // Editar
+          await fetchPUTFormData(`/canchas/edit/${canchaId}`, formData);
+          showSuccess('Cancha actualizada exitosamente');
+        } else {
+          // Crear
+          await fetchPOSTFormData('/canchas/create', formData);
+          showSuccess('Cancha creada exitosamente');
+        }
+
+        closeModal();
+        loadCanchas();
+
+      } catch (error) {
+        showError('Error: ' + error.message);
+      } finally {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Guardar';
+      }
+    });
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+      const modal = document.getElementById('canchaModal');
+      if (event.target == modal) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>
