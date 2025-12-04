@@ -1,7 +1,7 @@
 /**
  * MIDDLEWARES DE VERIFICACIÓN DE ROLES
  * Verifican que el usuario tenga el rol requerido
- * IMPORTANTE: Estos middlewares deben usarse DESPUÉS de verificarToken
+ * Estos middlewares se usan DESPUÉS de verificarToken
  */
 
 /**

@@ -1,4 +1,4 @@
-// Importamos cloudinary v2
+// Importamos cloudinary 
 const cloudinary = require('cloudinary').v2;
 
 /**

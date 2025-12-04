@@ -122,7 +122,7 @@ const editarAdmin = async (req, res) => {
       });
     }
     
-    // 2. Verificar que sea admin (no permitir editar superadmin)
+    // 2. Verificar que sea admin 
     if (admin.rol !== 'admin') {
       return res.status(400).json({ 
         error: 'Solo se pueden editar administradores, no superadministradores.' 

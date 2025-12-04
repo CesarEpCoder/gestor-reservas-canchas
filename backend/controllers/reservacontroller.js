@@ -1,7 +1,7 @@
 // Importamos los modelos
 const Reserva = require('../models/reserva');
 const Cancha = require('../models/cancha');
-const { WebpayPlus } = require('transbank-sdk'); // Importación correcta
+const { WebpayPlus } = require('transbank-sdk'); 
 const { validarFechaNoVencida, validarFormatoHora } = require('../utils/validators');
 
 /**
@@ -201,14 +201,14 @@ const webpayReturn = async (req, res) => {
     }
     
   } catch (error) {
-    console.error('❌ Error en webpayReturn:', error);
+    console.error('Error en webpayReturn:', error);
     console.error('Detalle:', error.message);
     return res.redirect('http://localhost:5000/user/pago-fallido.html');
   }
 };
 
 /**
- * VER MIS RESERVAS (del usuario logueado)
+ * VER MIS RESERVAS (usuario logueado)
  * GET /api/reservas/mis-reservas
  */
 const verMisReservas = async (req, res) => {

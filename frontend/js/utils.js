@@ -4,7 +4,7 @@
  */
 
 /**
- * Formatear fecha a DD/MM/YYYY
+ * Cambiar fecha a DD/MM/YYYY
  */
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -15,7 +15,7 @@ function formatDate(dateString) {
 }
 
 /**
- * Formatear precio con separador de miles
+ * Cambiar precio con separador de miles
  */
 function formatPrice(price) {
   return new Intl.NumberFormat('es-CL', {

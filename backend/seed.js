@@ -33,7 +33,7 @@ const crearSuperAdmin = async () => {
     const superAdmin = new User({
       nombre: 'Super Administrador',
       email: 'superadmin@canchas.com',
-      password: 'superadmin123', // Cambiar en producción
+      password: 'superadmin123', 
       rol: 'superadmin'
     });
     
@@ -44,7 +44,6 @@ const crearSuperAdmin = async () => {
     console.log('   Email: superadmin@canchas.com');
     console.log('   Password: superadmin123');
     console.log('==========================================');
-    console.log('⚠️  IMPORTANTE: Cambia la contraseña después del primer login');
     
     // 4. Cerrar conexión
     await mongoose.connection.close();

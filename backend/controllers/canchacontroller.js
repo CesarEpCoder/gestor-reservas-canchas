@@ -248,7 +248,7 @@ const eliminarCancha = async (req, res) => {
       });
     }
     
-    // 4. Desactivar la cancha (borrado lógico)
+    // 4. Desactivar la cancha
     cancha.activa = false;
     await cancha.save();
     

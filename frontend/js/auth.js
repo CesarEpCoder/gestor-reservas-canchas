@@ -95,7 +95,7 @@ function requireRole(allowedRoles) {
 }
 
 /**
- * Decodificar token JWT (simple, sin verificar firma)
+ * Decodificar token JWT (sin verificar firma)
  */
 function decodeToken(token) {
   try {

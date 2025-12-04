@@ -57,7 +57,7 @@ const subirImagenCloudinary = async (req, res, next) => {
     
     // Agregar URL a la request
     req.imagenUrl = resultado.secure_url;
-    req.cloudinaryId = resultado.public_id; // Por si quieres eliminar después
+    req.cloudinaryId = resultado.public_id; 
     
     next();
     

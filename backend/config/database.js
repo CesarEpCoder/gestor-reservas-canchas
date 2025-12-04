@@ -2,8 +2,7 @@
 const mongoose = require('mongoose');
 
 /**
- * Función para conectar a MongoDB Atlas
- * Lee la URI desde las variables de entorno
+ * Función para conectar a MongoDB 
  */
 const connectDB = async () => {
   try {
@@ -15,7 +14,7 @@ const connectDB = async () => {
     
   } catch (error) {
     // Si hay error, lo mostramos y detenemos la aplicación
-    console.error('❌ Error al conectar a MongoDB:', error.message);
+    console.error('Error al conectar a MongoDB:', error.message);
     process.exit(1); // Salir con error
   }
 };

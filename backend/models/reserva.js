@@ -77,7 +77,7 @@ const reservaSchema = new mongoose.Schema({
   expiraEn: {
     type: Date,
     default: function() {
-      return new Date(Date.now() + 10 * 60 * 1000); // 10 minutos desde ahora
+      return new Date(Date.now() + 10 * 60 * 1000); 
     }
   }
 
