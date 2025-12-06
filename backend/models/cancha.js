@@ -49,7 +49,7 @@ const canchaSchema = new mongoose.Schema({
   horarios: [{
     dia: {
       type: String,
-      enum: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+      enum: ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'],
       required: true
     },
     horaInicio: {

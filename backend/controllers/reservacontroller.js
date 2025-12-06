@@ -47,8 +47,9 @@ const crearReserva = async (req, res) => {
       });
     }
     
-    // 5. Convertir fecha a objeto Date
-    const fechaReserva = new Date(fecha);
+    // 5. Convertir fecha a objeto Date (CORREGIDO)
+    const [year, month, day] = fecha.split('-');
+    const fechaReserva = new Date(year, month - 1, day);
     fechaReserva.setHours(0, 0, 0, 0);
     
     // 6. Verificar que el horario esté disponible

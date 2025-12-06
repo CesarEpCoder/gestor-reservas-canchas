@@ -319,7 +319,8 @@ const verDisponibilidad = async (req, res) => {
     }
     
     // 3. Convertir fecha a objeto Date
-    const fechaBusqueda = new Date(fecha);
+    const [year, month, day] = fecha.split('-');
+    const fechaBusqueda = new Date(year, month - 1, day);
     fechaBusqueda.setHours(0, 0, 0, 0);
     
     // Validar que no sea fecha pasada
@@ -333,7 +334,7 @@ const verDisponibilidad = async (req, res) => {
     }
     
     // 4. Obtener el día de la semana
-    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     const diaSemana = diasSemana[fechaBusqueda.getDay()];
     
     // 5. Buscar horarios definidos para ese día
@@ -364,7 +365,7 @@ const verDisponibilidad = async (req, res) => {
       const [horaFin, minFin] = horario.horaFin.split(':').map(Number);
       
       // Generar slots de 1 hora
-      for (let h = horaInicio; h < horaFin; h++) {
+      for (let h = horaInicio; h <= horaFin; h++) {
         const horaSlot = `${h.toString().padStart(2, '0')}:${minInicio.toString().padStart(2, '0')}`;
         
         // Si no está reservada, agregarla

@@ -54,6 +54,17 @@
         showLoader('reservasContainer');
         const data = await fetchGET('/reservas/mis-reservas');
 
+        // Ordenar por fecha más próxima primero
+        data.reservas.sort((a, b) => {
+          const fechaA = new Date(a.fecha);
+          const fechaB = new Date(b.fecha);
+          if (fechaA.getTime() !== fechaB.getTime()) {
+            return fechaA - fechaB; // Fecha más cercana primero
+          }
+          // Si es la misma fecha, ordenar por hora
+          return a.hora.localeCompare(b.hora);
+        });
+
         if (data.total === 0) {
           document.getElementById('reservasContainer').innerHTML = `
             <div class="empty-state">
