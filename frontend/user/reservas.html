@@ -26,7 +26,7 @@
     <main class="main-content">
       <header class="content-header">
         <h1>Canchas Disponibles</h1>
-        <p style="color: #6b7280; font-size: 14px;">ℹ️ Horarios disponibles entre : 08:00 a 23:00 hrs</p>
+        <p style="color: #6b7280; font-size: 14px;">ℹ️ Horarios disponibles entre : 15:00 a 23:00 hrs</p>
       </header>
 
       <!-- Grid de Canchas -->
@@ -105,8 +105,7 @@
               <div class="cancha-content">
                 <h3>${cancha.nombre}</h3>
                 <p>${cancha.descripcion}</p>
-                <p class="admin-info">📍 ${cancha.adminId.nombre}</p>
-                <p class="precio">${formatPrice(cancha.precio)}/hora</p>
+                <p class="precio">${formatPrice(cancha.precio)} x hora</p>
                 <button class="btn btn-primary" onclick="selectCancha('${cancha._id}', '${cancha.nombre}', ${cancha.precio})">
                   Reservar
                 </button>
