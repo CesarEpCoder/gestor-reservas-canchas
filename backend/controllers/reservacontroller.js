@@ -80,7 +80,7 @@ const crearReserva = async (req, res) => {
     
     // 8. Crear transacción en Webpay (ambiente de integración)
     try {
-      // Configurar Webpay para integración
+      //Webpay para integración
       const tx = new WebpayPlus.Transaction();
       
       // URLs de retorno
@@ -89,9 +89,9 @@ const crearReserva = async (req, res) => {
       // Crear la transacción
       const createResponse = await tx.create(
         `${nuevaReserva._id}`.substring(0, 26), // buyOrder (máximo 26 caracteres)
-        `SESSION-${nuevaReserva._id}`, // sessionId
-        cancha.precio, // amount (monto)
-        returnUrl // returnUrl
+        `SESSION-${nuevaReserva._id}`, 
+        cancha.precio, 
+        returnUrl 
       );
       
       console.log('✅ Transacción Webpay creada:', createResponse);
